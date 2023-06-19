@@ -6,4 +6,42 @@
     display: flex;
     align-items: flex-start; /* Align items to the top */
 }
+
+/* Button */
+.btn-red {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.25rem;
+    background-color: red;
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-red:hover {
+    background-color: darkred;
+}
+
+.btn-light-blue {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.25rem;
+    background-color: #AED9E0;
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.btn-light-blue:hover {
+    background-color: #8AC7D1;
+}
+  
+  
+  
   
