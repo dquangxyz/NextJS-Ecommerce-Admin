@@ -2,15 +2,24 @@
 import Layout from "@/components/Layout"
 import { useState } from "react";
 import axios from "axios";
+import { redirect } from "next/navigation";
 
 export default function NewProduct() {
     const [title, setTitle] = useState<string>('');
     const [description, setDescription] = useState<string>('');
     const [price, setPrice] = useState<string>('');
+    const [goToProduct, setGoToProduct] = useState<boolean>(false);
 
-    const handleAddNewProduct = async () => {
+    const handleAddNewProduct = async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
       const data = { title, description, price };
       await axios.post('/api/products', data)
+      setGoToProduct(true);
+
+    }
+
+    if (goToProduct){
+      return redirect ('/products')
     }
 
   return (
