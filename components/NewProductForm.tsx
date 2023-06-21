@@ -14,12 +14,12 @@ export default function NewProductForm() {
       const data = { title, description, price };
       await axios.post('/api/products', data)
       setGoToProduct(true);
-
     }
 
     if (goToProduct){
       return redirect ('/products')
     }
+    
   return (
     <form onSubmit={handleAddNewProduct}>
         <div className="flex flex-col">

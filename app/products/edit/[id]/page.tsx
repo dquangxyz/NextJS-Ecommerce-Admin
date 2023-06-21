@@ -11,7 +11,7 @@ export default function EditProductPage({params} : pageProps) {
   return (
   <Layout>
     <h1 className="text-blue-900 mb-2 text-xl">Edit Product</h1>
-    <EditProductForm />
+    <EditProductForm productId={id}/>
   </Layout>
   )
 }
