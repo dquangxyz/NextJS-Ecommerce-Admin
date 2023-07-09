@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { redirect } from "next/navigation";
 
@@ -7,12 +7,32 @@ export default function NewProductForm() {
     const [title, setTitle] = useState<string>('');
     const [description, setDescription] = useState<string>('');
     const [price, setPrice] = useState<string>('');
+    const [images, setImages] = useState<string[]>([]);
+
+    const [imgLoadingStatus, setImgLoadingStatus] = useState<boolean>(false);
+
 
     const [goToProduct, setGoToProduct] = useState<boolean>(false);
 
+    useEffect(() => {
+      let timer: NodeJS.Timeout | null = null;
+  
+      if (images.length > 0) {
+        timer = setTimeout(() => {
+          setImgLoadingStatus(false);
+        }, 2000);
+      }
+  
+      return () => {
+        if (timer) {
+          clearTimeout(timer);
+        }
+      };
+    }, [images]);
+
     const handleAddNewProduct = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const data = { title, description, price };
+      const data = { title, description, price, images };
       await axios.post('/api/products', data)
       setGoToProduct(true);
     }
@@ -20,13 +40,16 @@ export default function NewProductForm() {
     const uploadImages = async (e : React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target?.files;
       if (files && files.length > 0){
+        setImgLoadingStatus(true);
         const data = new FormData();
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           data.append('file', file);
         }
         const res = await axios.post('/api/upload', data); // just upload the photo and show
-        console.log(res.data);
+        const newImageUrls = res.data.links;
+        setImages(prev => [...prev, ...newImageUrls]);
+        setImgLoadingStatus(false);
       }
     }
 
@@ -49,6 +72,18 @@ export default function NewProductForm() {
           <input className="px-1 mb-2" type="number" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
         </div>
         <div className="flex flex-col">
+          {imgLoadingStatus ? <p>Uploading images...</p> :
+            <>
+              {images.length > 0 && images.map((link, index) => {
+                return (
+                  <div className="h-24 p-5">
+                    <img key={index} src={link} alt="uploaded photo successfully" />
+                    <p>{link}</p>
+                  </div>
+                );
+              })}
+            </>    
+          }
           <label className="w-24 h-24 cursor-pointer text-center flex flex-col items-center justify-center text-sm gap-1 text-primary rounded-sm bg-white shadow-sm border border-primary">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />

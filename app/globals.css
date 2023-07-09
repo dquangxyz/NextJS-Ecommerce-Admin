@@ -80,5 +80,10 @@
     margin-right: 0;
     background-color: #ccc;
 }
+
+/* Product images */
+img {
+    max-height: 100%;
+}
   
   

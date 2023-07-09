@@ -4,8 +4,9 @@ const nextConfig = {}
 // module.exports = nextConfig
 // next.config.js
 module.exports = {
-    images: {
-      domains: ['lh3.googleusercontent.com'],
-    },
-  };
+  images: {
+    domains: ['lh3.googleusercontent.com', 'nextjs-ecommerce-dquangxyz.s3.amazonaws.com'],
+  },
+};
+
   
