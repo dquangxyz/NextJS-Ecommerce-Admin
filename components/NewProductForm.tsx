@@ -11,23 +11,10 @@ export default function NewProductForm() {
 
     const [imgLoadingStatus, setImgLoadingStatus] = useState<boolean>(false);
 
-
     const [goToProduct, setGoToProduct] = useState<boolean>(false);
 
     useEffect(() => {
-      let timer: NodeJS.Timeout | null = null;
-  
-      if (images.length > 0) {
-        timer = setTimeout(() => {
-          setImgLoadingStatus(false);
-        }, 2000);
-      }
-  
-      return () => {
-        if (timer) {
-          clearTimeout(timer);
-        }
-      };
+      setImages(images);
     }, [images]);
 
     const handleAddNewProduct = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -76,8 +63,8 @@ export default function NewProductForm() {
             <>
               {images.length > 0 && images.map((link, index) => {
                 return (
-                  <div className="h-24 p-5">
-                    <img key={index} src={link} alt="uploaded photo successfully" />
+                  <div key={index} className="h-24 p-5">
+                    <img  src={link} alt="uploaded photo successfully" />
                     <p>{link}</p>
                   </div>
                 );

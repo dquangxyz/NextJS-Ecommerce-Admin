@@ -8,6 +8,7 @@ interface ProductItem {
     title: string;
     description: string;
     price: number;
+    images: string[];
 }
 interface EditProductFormProps {
     productId: string;
@@ -18,6 +19,8 @@ export default function EditProductForm({productId}: EditProductFormProps) {
     const [title, setTitle] = useState<string>(selectedProduct?.title || 'test');
     const [description, setDescription] = useState<string>(selectedProduct?.description || '');
     const [price, setPrice] = useState<Number>(selectedProduct?.price || 0);
+    const [images, setImages] = useState<string[]>([]);
+    const [imgLoadingStatus, setImgLoadingStatus] = useState<boolean>(false);
     const [goToProduct, setGoToProduct] = useState<boolean>(false);
 
     useEffect(() => {
@@ -30,6 +33,7 @@ export default function EditProductForm({productId}: EditProductFormProps) {
                 setTitle(product?.title || '');
                 setDescription(product?.description || '');
                 setPrice(product?.price || 0);
+                setImages(product?.images || []);
             } catch (error) {
                 console.log('Error fetching products:', error);
             }
@@ -41,7 +45,7 @@ export default function EditProductForm({productId}: EditProductFormProps) {
 
     const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const data = { _id: productId, title, description, price };
+        const data = { _id: productId, title, description, price, images };
         try {
             await axios.put('/api/products/', data);
             setGoToProduct(true);
@@ -49,6 +53,21 @@ export default function EditProductForm({productId}: EditProductFormProps) {
             console.log('Error updating product:', error);
         }
     }
+    const uploadImages = async (e : React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target?.files;
+        if (files && files.length > 0){
+          setImgLoadingStatus(true);
+          const data = new FormData();
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            data.append('file', file);
+          }
+          const res = await axios.post('/api/upload', data); // just upload the photo and show
+          const newImageUrls = res.data.links;
+          setImages(prev => [...prev, ...newImageUrls]);
+          setImgLoadingStatus(false);
+        }
+      }
 
     if (goToProduct){
         return redirect ('/products')
@@ -57,16 +76,39 @@ export default function EditProductForm({productId}: EditProductFormProps) {
   return (
     <form onSubmit={handleEditProduct}>
         <div className="flex flex-col">
-        <label className="text-blue-900">Product name</label>
-        <input className="px-1 mb-2" type="text" placeholder="Product name" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <label className="text-blue-900">Product name</label>
+            <input className="px-1 mb-2" type="text" placeholder="Product name" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
         <div className="flex flex-col">
-        <label>Description</label>
-        <textarea className="px-1 mb-2" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
+            <label>Description</label>
+            <textarea className="px-1 mb-2" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
         </div>
         <div className="flex flex-col">
-        <label>Price (in USD)</label>
-        <input className="px-1 mb-2" type="number" placeholder="Price" value={price.toString()} onChange={(e) => setPrice(Number(e.target.value))} />
+            <label>Price (in USD)</label>
+            <input className="px-1 mb-2" type="number" placeholder="Price" value={price.toString()} onChange={(e) => setPrice(Number(e.target.value))} />
+        </div>
+        <div className="flex flex-col">
+          {imgLoadingStatus ? <p>Uploading images...</p> :
+            <>
+              {images.length > 0 && images.map((link, index) => {
+                return (
+                  <div key={index} className="h-24 p-5">
+                    <img src={link} alt="uploaded photo" />
+                    <p>{link}</p>
+                  </div>
+                );
+              })}
+            </>    
+          }
+          <label className="w-24 h-24 cursor-pointer text-center flex flex-col items-center justify-center text-sm gap-1 text-primary rounded-sm bg-white shadow-sm border border-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            <div>
+              Add image
+            </div>
+            <input type="file" onChange={uploadImages} className="hidden"/>
+          </label>
         </div>
         <button type="submit" className="bg-blue-900 text-white px-4 py-1 rounded-md">Save</button>
     </form>
