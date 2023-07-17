@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { redirect } from "next/navigation";
+import Image from 'next/image';
+import { ReactSortable } from "react-sortablejs";
 
 interface ProductItem {
     _id: string;
@@ -13,6 +15,10 @@ interface ProductItem {
 interface EditProductFormProps {
     productId: string;
 }
+interface ItemType {
+  id: number;
+  name: string;
+}
 
 export default function EditProductForm({productId}: EditProductFormProps) {
     const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
@@ -20,8 +26,14 @@ export default function EditProductForm({productId}: EditProductFormProps) {
     const [description, setDescription] = useState<string>(selectedProduct?.description || '');
     const [price, setPrice] = useState<Number>(selectedProduct?.price || 0);
     const [images, setImages] = useState<string[]>([]);
+    const [imagesOrder, setImagesOrder] = useState<ItemType[]>([]);
     const [imgLoadingStatus, setImgLoadingStatus] = useState<boolean>(false);
     const [goToProduct, setGoToProduct] = useState<boolean>(false);
+
+    const [exampleState, setExampleState] = useState<ItemType[]>([
+      { id: 1, name: "shrek" },
+      { id: 2, name: "fiona" },
+    ]);
 
     useEffect(() => {
         const fetchData =  async () => {
@@ -34,6 +46,10 @@ export default function EditProductForm({productId}: EditProductFormProps) {
                 setDescription(product?.description || '');
                 setPrice(product?.price || 0);
                 setImages(product?.images || []);
+                setImagesOrder(product?.images.map((item, index) => ({ 
+                  id: index, 
+                  name: item
+                })) || [])
             } catch (error) {
                 console.log('Error fetching products:', error);
             }
@@ -54,20 +70,20 @@ export default function EditProductForm({productId}: EditProductFormProps) {
         }
     }
     const uploadImages = async (e : React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target?.files;
-        if (files && files.length > 0){
-          setImgLoadingStatus(true);
-          const data = new FormData();
-          for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            data.append('file', file);
-          }
-          const res = await axios.post('/api/upload', data); // just upload the photo and show
-          const newImageUrls = res.data.links;
-          setImages(prev => [...prev, ...newImageUrls]);
-          setImgLoadingStatus(false);
+      const files = e.target?.files;
+      if (files && files.length > 0){
+        setImgLoadingStatus(true);
+        const data = new FormData();
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          data.append('file', file);
         }
+        const res = await axios.post('/api/upload', data); // just upload the photo and show
+        const newImageUrls = res.data.links;
+        setImages(prev => [...prev, ...newImageUrls]);
+        setImgLoadingStatus(false);
       }
+    }
 
     if (goToProduct){
         return redirect ('/products')
@@ -89,16 +105,26 @@ export default function EditProductForm({productId}: EditProductFormProps) {
         </div>
         <div className="flex flex-col">
           {imgLoadingStatus ? <p>Uploading images...</p> :
-            <>
-              {images.length > 0 && images.map((link, index) => {
+            <ReactSortable 
+              list={imagesOrder}
+              setList={setImagesOrder} 
+            >
+              {imagesOrder.length > 0 && imagesOrder.map((link, index) => {
                 return (
-                  <div key={index} className="h-24 p-5">
-                    <img src={link} alt="uploaded photo" />
-                    <p>{link}</p>
+                  <div key={link.id} className="h-24 p-5">
+                    {/* <img src={link} alt="uploaded photo" /> */}
+                    <Image
+                      src={link.name}
+                      width={100}
+                      height={140}
+                      alt="uploaded photo"
+                      unoptimized={false}
+                    />
+                    <a href={link.name}>{link.name}</a>
                   </div>
                 );
               })}
-            </>    
+            </ReactSortable>   
           }
           <label className="w-24 h-24 cursor-pointer text-center flex flex-col items-center justify-center text-sm gap-1 text-primary rounded-sm bg-white shadow-sm border border-primary">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
