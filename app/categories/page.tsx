@@ -4,23 +4,29 @@ import Layout from "@/components/Layout";
 import Link from "next/link";
 import {useEffect, useState} from "react";
 import axios from "axios";
+import mongoose from "mongoose";
+
 
 interface CategoryItem {
     _id: string;
     name: string;
-    parentCategory: string
-}
+    parentCategory: CategoryItem | null
+};
 
 export default function Categories() {
     // local state
     const [name, setName] = useState<string>("");
-    // const [parentCategory,setParentCategory] = useState<string>("");
+    const [parentCategory,setParentCategory] = useState<string>("");
     const [categoriesList, setCategoriesList] = useState<CategoryItem[]>([]);
 
-    useEffect(() => {
-        axios.get('/api/categories').then(res => {
+    const fetchCategories = async () => {
+        await axios.get('/api/categories').then(res => {
             setCategoriesList(res.data);
         });
+    };
+
+    useEffect(() => {
+        fetchCategories();
     }, []);
 
     // define helper functions
@@ -28,8 +34,10 @@ export default function Categories() {
         e.preventDefault();
         await axios.post('/api/categories', {
             name: name,
+            parentCategory: parentCategory
         });
         setName("");
+        fetchCategories();
     };
 
     const editCategory = (e: CategoryItem) => {console.log("edit button clicked")};
@@ -47,12 +55,15 @@ export default function Categories() {
                     onChange={(e) => setName(e.target.value)}
                     value={name}
                 />
-                {/* <select onChange={ev => setParentCategory(ev.target.value)} value={parentCategory}>
+                <select className='mb-0' 
+                    value={parentCategory} 
+                    onChange={(e) => setParentCategory(e.target.value)}
+                >
                     <option value="">No parent category</option>
                     {categoriesList.map(category => (
                         <option key={category._id} value={category._id}>{category.name}</option>
                     ))}
-                </select> */}
+                </select>
             </div>
             <div className="flex gap-1">     
                 <button type="submit" className="bg-blue-900 text-white px-4 py-1 rounded-md">Save</button>
@@ -71,7 +82,7 @@ export default function Categories() {
             {categoriesList.map(category => (
                 <tr key={category._id}>
                     <td>{category.name}</td>
-                    <td>{category.name}</td>
+                    <td>{category.parentCategory ? category.parentCategory.name : 'N/A'}</td>
                     <td>
                         <button onClick={() => editCategory(category)} className="btn-light-blue">Edit</button>
                         <button onClick={() => deleteCategory(category)} className="btn-red">Delete</button>
