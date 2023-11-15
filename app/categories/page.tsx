@@ -2,6 +2,7 @@
 import React from 'react'
 import Layout from "@/components/Layout";
 import {useEffect, useState} from "react";
+import { redirect } from "next/navigation";
 import axios from "axios";
 
 
@@ -16,7 +17,13 @@ export default function Categories() {
     const [name, setName] = useState<string>("");
     const [parentCategory,setParentCategory] = useState<string>("");
     const [categoriesList, setCategoriesList] = useState<CategoryItem[]>([]);
+
     const [editedCategory, setEditedCategory] = useState<CategoryItem>();
+
+    const [selectedDeleteCategory, setSelectedDeleteCategory] = useState<CategoryItem | null>();
+    const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+
+    const [refreshPage, setRefreshPage] = useState<boolean>(false);
 
     const fetchCategories = () => {
         axios.get('/api/categories').then(res => {
@@ -55,7 +62,23 @@ export default function Categories() {
         setParentCategory(category.parentCategory?._id);
     };
 
-    const deleteCategory = (e: CategoryItem) => {console.log("delete button clicked")}; 
+    const handleOpenModal = (category: CategoryItem) => {
+        setShowDeleteModal(true);
+        setSelectedDeleteCategory(category);
+    };
+    
+    const handleConfirmDelete = async (confirmed: boolean) => {
+        if (confirmed) {
+            await axios.delete('/api/categories?_id='+selectedDeleteCategory?._id);
+            setRefreshPage(true);
+        }
+        setShowDeleteModal(false);
+        setSelectedDeleteCategory(null);
+    };
+
+    if (refreshPage){
+        return redirect ('/categories')
+    }
 
   return (
     <Layout>
@@ -99,12 +122,26 @@ export default function Categories() {
                     <td>{category.parentCategory ? category.parentCategory.name : 'N/A'}</td>
                     <td>
                         <button onClick={() => editCategory(category)} className="btn-light-blue">Edit</button>
-                        <button onClick={() => deleteCategory(category)} className="btn-red">Delete</button>
+                        <button onClick={() => handleOpenModal(category)} className="btn-red">Delete</button>
                     </td>
                 </tr>
             ))}
+
             </tbody>
         </table>
+
+        {showDeleteModal && (
+            <div className="modal">
+                <div className="modal-content">
+                    <h2>Confirm Delete</h2>
+                    <p>Are you sure you want to delete this category (id: ${selectedDeleteCategory?._id} )?</p>
+                    <div className="modal-buttons">
+                    <button onClick={() => handleConfirmDelete(true)}>Yes</button>
+                    <button onClick={() => handleConfirmDelete(false)}>No</button>
+                    </div>
+                </div>
+            </div>
+        )}
     </Layout>
   )
 }

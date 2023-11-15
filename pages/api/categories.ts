@@ -29,6 +29,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         });
         res.json(categoryDoc);
     } else if (method === 'DELETE') {
-        res.json("delete")
+        // if (req.query?._id) {
+        //     await Category.deleteOne({_id:req.query?.id});
+        //     res.json(true);
+        // }
+        const {_id} = req.query;
+        await Category.deleteOne({_id});
+        res.json('ok');
     }
 }
