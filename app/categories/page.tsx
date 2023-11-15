@@ -1,10 +1,8 @@
 "use client"
 import React from 'react'
 import Layout from "@/components/Layout";
-import Link from "next/link";
 import {useEffect, useState} from "react";
 import axios from "axios";
-import mongoose from "mongoose";
 
 
 interface CategoryItem {
@@ -19,8 +17,8 @@ export default function Categories() {
     const [parentCategory,setParentCategory] = useState<string>("");
     const [categoriesList, setCategoriesList] = useState<CategoryItem[]>([]);
 
-    const fetchCategories = async () => {
-        await axios.get('/api/categories').then(res => {
+    const fetchCategories = () => {
+        axios.get('/api/categories').then(res => {
             setCategoriesList(res.data);
         });
     };
