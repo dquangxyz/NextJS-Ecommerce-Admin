@@ -8,7 +8,7 @@ import axios from "axios";
 interface CategoryItem {
     _id: string;
     name: string;
-    parentCategory: CategoryItem | null
+    parentCategory: CategoryItem
 };
 
 export default function Categories() {
@@ -16,6 +16,7 @@ export default function Categories() {
     const [name, setName] = useState<string>("");
     const [parentCategory,setParentCategory] = useState<string>("");
     const [categoriesList, setCategoriesList] = useState<CategoryItem[]>([]);
+    const [editedCategory, setEditedCategory] = useState<CategoryItem>();
 
     const fetchCategories = () => {
         axios.get('/api/categories').then(res => {
@@ -30,21 +31,36 @@ export default function Categories() {
     // define helper functions
     const saveCategory = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        await axios.post('/api/categories', {
-            name: name,
-            parentCategory: parentCategory
-        });
+
+        if (editedCategory){
+            await axios.put('/api/categories', {
+                _id: editedCategory._id,
+                name: name,
+                parentCategory: parentCategory
+            });
+        } else {
+            await axios.post('/api/categories', {
+                name: name,
+                parentCategory: parentCategory
+            });
+        }
+        
         setName("");
         fetchCategories();
     };
 
-    const editCategory = (e: CategoryItem) => {console.log("edit button clicked")};
+    const editCategory = (category: CategoryItem) => {
+        setEditedCategory(category);
+        setName(category.name);
+        setParentCategory(category.parentCategory?._id);
+    };
+
     const deleteCategory = (e: CategoryItem) => {console.log("delete button clicked")}; 
 
   return (
     <Layout>
         <h1>Categories</h1>
-        <label>New category name</label>
+        <label>{editedCategory? `Edit category ${editedCategory.name}`: 'Create new category'}</label>
         <form onSubmit={saveCategory}>
             <div className="flex gap-1">
                 <input

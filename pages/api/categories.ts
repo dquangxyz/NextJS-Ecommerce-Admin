@@ -22,7 +22,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         });
         res.json(categoryDoc);
     } else if (method === 'PUT') {
-        res.json("put")
+        const { _id,name,parentCategory } = req.body;
+        const categoryDoc = await Category.updateOne({_id},{
+            name: name,
+            parentCategory: parentCategory
+        });
+        res.json(categoryDoc);
     } else if (method === 'DELETE') {
         res.json("delete")
     }
