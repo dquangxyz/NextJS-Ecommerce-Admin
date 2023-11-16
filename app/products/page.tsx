@@ -18,7 +18,7 @@ export default function Products() {
   const [selectedDeleteItem, setSelectedDeleteItem] = useState<string>('');
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
-  const [goToProduct, setGoToProduct] = useState<boolean>(false);
+  const [refreshPage, setRefreshPage] = useState<boolean>(false);
 
   useEffect(() => {
     axios.get('/api/products').then(res => {
@@ -35,13 +35,13 @@ export default function Products() {
     if (confirmed) {
       await axios.delete('/api/products?id='+selectedDeleteItem);
       console.log("Product deleted successfully");
-      setGoToProduct(true);
+      setRefreshPage(true);
     }
     setShowDeleteModal(false);
     setSelectedDeleteItem('');
   };
 
-  if (goToProduct){
+  if (refreshPage){
     return redirect ('/products')
   }
 

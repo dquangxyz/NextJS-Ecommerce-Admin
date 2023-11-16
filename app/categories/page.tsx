@@ -25,8 +25,8 @@ export default function Categories() {
 
     const [refreshPage, setRefreshPage] = useState<boolean>(false);
 
-    const fetchCategories = () => {
-        axios.get('/api/categories').then(res => {
+    const fetchCategories = async () => {
+        await axios.get('/api/categories').then(res => {
             setCategoriesList(res.data);
         });
     };

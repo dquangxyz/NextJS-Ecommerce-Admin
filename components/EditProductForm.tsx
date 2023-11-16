@@ -9,6 +9,7 @@ interface ProductItem {
     _id: string;
     title: string;
     description: string;
+    category: string;
     price: number;
     images: string[];
 }
@@ -19,55 +20,65 @@ interface ItemType {
   id: number;
   name: string;
 }
+interface CategoryItem {
+  _id: string;
+  name: string;
+  parentCategory: CategoryItem
+};
 
 export default function EditProductForm({productId}: EditProductFormProps) {
     const [selectedProduct, setSelectedProduct] = useState<ProductItem | null>(null);
+
     const [title, setTitle] = useState<string>(selectedProduct?.title || 'test');
     const [description, setDescription] = useState<string>(selectedProduct?.description || '');
+    const [category,setCategory] = useState<string>(selectedProduct?.category || '');
     const [price, setPrice] = useState<Number>(selectedProduct?.price || 0);
     const [images, setImages] = useState<string[]>([]);
     const [imagesOrder, setImagesOrder] = useState<ItemType[]>([]);
     const [imgLoadingStatus, setImgLoadingStatus] = useState<boolean>(false);
-    const [goToProduct, setGoToProduct] = useState<boolean>(false);
-
-    const [exampleState, setExampleState] = useState<ItemType[]>([
-      { id: 1, name: "shrek" },
-      { id: 2, name: "fiona" },
-    ]);
+    const [categories,setCategories] = useState([]);
+    const [refreshPage, setRefreshPage] = useState<boolean>(false);
 
     useEffect(() => {
-        const fetchData =  async () => {
-            try {
-                const res =  await axios.get<ProductItem[]>('/api/products');
-                const data = res.data;
-                const product = data.find(item => item._id === productId);
-                setSelectedProduct(product || null);
-                setTitle(product?.title || '');
-                setDescription(product?.description || '');
-                setPrice(product?.price || 0);
-                setImages(product?.images || []);
-                setImagesOrder(product?.images.map((item, index) => ({ 
-                  id: index, 
-                  name: item
-                })) || [])
-            } catch (error) {
-                console.log('Error fetching products:', error);
-            }
+      const fetchProductsData =  async () => {
+        try {
+            const res =  await axios.get<ProductItem[]>('/api/products');
+            const data = res.data;
+            const product = data.find(item => item._id === productId);
+            setSelectedProduct(product || null);
+            setTitle(product?.title || '');
+            setDescription(product?.description || '');
+            setCategory(product?.category || '');
+            setPrice(product?.price || 0);
+            setImages(product?.images || []);
+            setImagesOrder(product?.images.map((item, index) => ({ 
+              id: index, 
+              name: item
+            })) || [])
+        } catch (error) {
+            console.log('Error fetching products:', error);
         }
-
-        fetchData();
-
+      }
+      fetchProductsData();
     }, [productId]);
 
+    useEffect(() => {
+      const fetchCategoryData = async () => {
+        const res = await axios.get('/api/categories');
+        setCategories(res.data);
+      }
+      fetchCategoryData();
+    },[]);
+
     const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const data = { _id: productId, title, description, price, images };
-        try {
-            await axios.put('/api/products/', data);
-            setGoToProduct(true);
-        } catch (error) {
-            console.log('Error updating product:', error);
-        }
+      e.preventDefault();
+      const data = { _id: productId, title, description, category, price, images };
+      try {
+        await axios.put('/api/products/', data);
+        setRefreshPage(true);
+      } catch (error) {
+        console.log('Error updating product:', error);
+      }
     }
     const uploadImages = async (e : React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target?.files;
@@ -85,23 +96,33 @@ export default function EditProductForm({productId}: EditProductFormProps) {
       }
     }
 
-    if (goToProduct){
-        return redirect ('/products')
+    if (refreshPage){
+      return redirect ('/products')
     }
 
   return (
     <form onSubmit={handleEditProduct}>
         <div className="flex flex-col">
-            <label className="text-blue-900">Product name</label>
-            <input className="px-1 mb-2" type="text" placeholder="Product name" value={title} onChange={(e) => setTitle(e.target.value)} />
+          <label className="text-blue-900">Product name</label>
+          <input className="px-1 mb-2" type="text" placeholder="Product name" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
         <div className="flex flex-col">
-            <label>Description</label>
-            <textarea className="px-1 mb-2" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
+          <label>Description</label>
+          <textarea className="px-1 mb-2" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
         </div>
         <div className="flex flex-col">
-            <label>Price (in USD)</label>
-            <input className="px-1 mb-2" type="number" placeholder="Price" value={price.toString()} onChange={(e) => setPrice(Number(e.target.value))} />
+          <label>Category</label>
+          <select value={category} onChange={e => setCategory(e.target.value)}>
+            <option value="">Uncategorized</option>
+            {categories.length > 0 && categories.map((c:CategoryItem) => (
+              <option key={c._id} value={c._id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="flex flex-col">
+          <label>Price (in USD)</label>
+          <input className="px-1 mb-2" type="number" placeholder="Price" value={price.toString()} onChange={(e) => setPrice(Number(e.target.value))} />
         </div>
         <div className="flex flex-col">
           {imgLoadingStatus ? <p>Uploading images...</p> :
@@ -130,9 +151,7 @@ export default function EditProductForm({productId}: EditProductFormProps) {
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
             </svg>
-            <div>
-              Add image
-            </div>
+            <div>Add image</div>
             <input type="file" onChange={uploadImages} className="hidden"/>
           </label>
         </div>
