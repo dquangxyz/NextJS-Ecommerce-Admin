@@ -36,7 +36,7 @@ export default function EditProductForm({productId}: EditProductFormProps) {
     const [images, setImages] = useState<string[]>([]);
     const [imagesOrder, setImagesOrder] = useState<ItemType[]>([]);
     const [imgLoadingStatus, setImgLoadingStatus] = useState<boolean>(false);
-    const [categories,setCategories] = useState([]);
+    const [categories,setCategories] = useState<CategoryItem[]>([]);
     const [refreshPage, setRefreshPage] = useState<boolean>(false);
 
     useEffect(() => {
