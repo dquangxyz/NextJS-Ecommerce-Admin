@@ -6,6 +6,10 @@ import { mongooseConnect } from '@/lib/mongoose';
 interface ICategory {
     name: string,
     parentCategory: mongoose.Types.ObjectId
+    properties: { 
+        name: string,
+        values: string[] 
+    }
 }
   
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -15,26 +19,25 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (method === 'GET'){
         res.json(await Category.find().populate('parentCategory'));
     } else if (method === 'POST'){
-        const { name, parentCategory } : ICategory = req.body;
+        const { name, parentCategory, properties } : ICategory = req.body;
         const categoryDoc = await Category.create({
-            name: name,
-            parentCategory: parentCategory
+            name,
+            parentCategory,
+            properties
         });
         res.json(categoryDoc);
     } else if (method === 'PUT') {
-        const { _id,name,parentCategory } = req.body;
+        const { _id, name, parentCategory, properties } = req.body;
+        console.log("prop", properties)
         const categoryDoc = await Category.updateOne({_id},{
-            name: name,
-            parentCategory: parentCategory
+            name,
+            parentCategory,
+            properties
         });
         res.json(categoryDoc);
     } else if (method === 'DELETE') {
-        // if (req.query?._id) {
-        //     await Category.deleteOne({_id:req.query?.id});
-        //     res.json(true);
-        // }
         const {_id} = req.query;
         await Category.deleteOne({_id});
-        res.json('ok');
+        res.json(true);
     }
 }

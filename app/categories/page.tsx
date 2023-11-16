@@ -5,23 +5,29 @@ import {useEffect, useState} from "react";
 import { redirect } from "next/navigation";
 import axios from "axios";
 
-
-interface CategoryItem {
+interface ICategoryItem {
     _id: string;
     name: string;
-    parentCategory: CategoryItem
+    parentCategory: ICategoryItem
 };
+
+interface IProperty {
+    name: string;
+    values: string;
+}
 
 export default function Categories() {
     // local state
     const [name, setName] = useState<string>("");
     const [parentCategory,setParentCategory] = useState<string>("");
-    const [categoriesList, setCategoriesList] = useState<CategoryItem[]>([]);
+    const [categoriesList, setCategoriesList] = useState<ICategoryItem[]>([]);
 
-    const [editedCategory, setEditedCategory] = useState<CategoryItem>();
+    const [editedCategory, setEditedCategory] = useState<ICategoryItem>();
 
-    const [selectedDeleteCategory, setSelectedDeleteCategory] = useState<CategoryItem | null>();
+    const [selectedDeleteCategory, setSelectedDeleteCategory] = useState<ICategoryItem | null>();
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+
+    const [properties,setProperties] = useState<IProperty[]>([]);
 
     const [refreshPage, setRefreshPage] = useState<boolean>(false);
 
@@ -43,26 +49,35 @@ export default function Categories() {
             await axios.put('/api/categories', {
                 _id: editedCategory._id,
                 name: name,
-                parentCategory: parentCategory
+                parentCategory: parentCategory,
+                properties: properties.map(p => ({
+                    name:p.name,
+                    values:p.values.split(','),
+                }))
             });
         } else {
             await axios.post('/api/categories', {
                 name: name,
-                parentCategory: parentCategory
+                parentCategory: parentCategory,
+                properties: properties.map(p => ({
+                    name:p.name,
+                    values:p.values.split(','),
+                }))
             });
-        }
-        
+        }  
         setName("");
+        setParentCategory('');
+        setProperties([]);
         fetchCategories();
     };
 
-    const editCategory = (category: CategoryItem) => {
+    const editCategory = (category: ICategoryItem) => {
         setEditedCategory(category);
         setName(category.name);
         setParentCategory(category.parentCategory?._id);
     };
 
-    const handleOpenModal = (category: CategoryItem) => {
+    const handleOpenModal = (category: ICategoryItem) => {
         setShowDeleteModal(true);
         setSelectedDeleteCategory(category);
     };
@@ -75,6 +90,34 @@ export default function Categories() {
         setShowDeleteModal(false);
         setSelectedDeleteCategory(null);
     };
+
+    // functions handle Properties
+    const addProperty = () => {
+        setProperties(prev => {
+            return [...prev, {name:'',values:''}];
+        });
+    }
+    const handlePropertyNameChange = (index: number,newName:string) => {
+        setProperties(prev => {
+            const properties = [...prev];
+            properties[index].name = newName;
+            return properties;
+        });
+    }
+    const handlePropertyValuesChange = (index: number, newValues: string) => {
+        setProperties(prev => {
+            const properties = [...prev];
+            properties[index].values = newValues;
+            return properties;
+        });
+    }
+    const removeProperty = (indexToRemove: number) => {
+        setProperties(prev => {
+            return [...prev].filter((property, pIndex) => {
+                return pIndex !== indexToRemove;
+            });
+        });
+    }
 
     if (refreshPage){
         return redirect ('/categories')
@@ -102,6 +145,27 @@ export default function Categories() {
                     ))}
                 </select>
             </div>
+
+            <div className="mb-2">
+                <label className="block">Properties</label>
+                <button onClick={addProperty} type="button" className="btn-default text-sm mb-2">Add new property</button>
+                {properties.length > 0 && properties.map((property, index) => (
+                    <div key={index} className="flex gap-1 mb-2">
+                        <input type="text"
+                                className="mb-0"
+                                onChange={(e) => handlePropertyNameChange(index, e.target.value)}
+                                value={property.name}
+                                placeholder="property name (example: color)"/>
+                        <input type="text"
+                                className="mb-0"
+                                onChange={(e)=> handlePropertyValuesChange(index, e.target.value)}
+                                value={property.values}
+                                placeholder="values, comma separated"/>
+                        <button onClick={() => removeProperty(index)} type="button" className="btn-red">X</button>
+                    </div>
+                ))}
+            </div>
+
             <div className="flex gap-1">     
                 <button type="submit" className="bg-blue-900 text-white px-4 py-1 rounded-md">Save</button>
             </div>
