@@ -5,7 +5,7 @@ import { mongooseConnect } from '@/lib/mongoose';
 
 interface ICategory {
     name: string,
-    parentCategory: mongoose.Types.ObjectId
+    parentCategory: mongoose.Types.ObjectId | null
     properties: { 
         name: string,
         values: string[] 
@@ -28,7 +28,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
         res.json(categoryDoc);
     } else if (method === 'PUT') {
         const { _id, name, parentCategory, properties } = req.body;
-        console.log("prop", properties)
         const categoryDoc = await Category.updateOne({_id},{
             name,
             parentCategory,

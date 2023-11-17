@@ -8,7 +8,7 @@ import axios from "axios";
 interface ICategoryItem {
     _id: string;
     name: string;
-    parentCategory: ICategoryItem
+    parentCategory: ICategoryItem | null
 };
 
 interface IProperty {
@@ -19,7 +19,7 @@ interface IProperty {
 export default function Categories() {
     // local state
     const [name, setName] = useState<string>("");
-    const [parentCategory,setParentCategory] = useState<string>("");
+    const [parentCategory,setParentCategory] = useState<string | null>("");
     const [categoriesList, setCategoriesList] = useState<ICategoryItem[]>([]);
 
     const [editedCategory, setEditedCategory] = useState<ICategoryItem>();
@@ -49,7 +49,7 @@ export default function Categories() {
             await axios.put('/api/categories', {
                 _id: editedCategory._id,
                 name: name,
-                parentCategory: parentCategory,
+                parentCategory: parentCategory === "" ? null : parentCategory,
                 properties: properties.map(p => ({
                     name:p.name,
                     values:p.values.split(','),
@@ -58,7 +58,7 @@ export default function Categories() {
         } else {
             await axios.post('/api/categories', {
                 name: name,
-                parentCategory: parentCategory,
+                parentCategory: parentCategory === "" ? null : parentCategory,
                 properties: properties.map(p => ({
                     name:p.name,
                     values:p.values.split(','),
@@ -74,7 +74,7 @@ export default function Categories() {
     const editCategory = (category: ICategoryItem) => {
         setEditedCategory(category);
         setName(category.name);
-        setParentCategory(category.parentCategory?._id);
+        setParentCategory(category.parentCategory ? category.parentCategory._id : null);
     };
 
     const handleOpenModal = (category: ICategoryItem) => {
@@ -136,7 +136,7 @@ export default function Categories() {
                     value={name}
                 />
                 <select className='mb-0' 
-                    value={parentCategory} 
+                    value={parentCategory ? parentCategory : ""} 
                     onChange={(e) => setParentCategory(e.target.value)}
                 >
                     <option value="">No parent category</option>
@@ -148,7 +148,7 @@ export default function Categories() {
 
             <div className="mb-2">
                 <label className="block">Properties</label>
-                <button onClick={addProperty} type="button" className="btn-default text-sm mb-2">Add new property</button>
+                <button onClick={addProperty} type="button" className="btn-default bg-green-500 text-sm mb-2">Add new property</button>
                 {properties.length > 0 && properties.map((property, index) => (
                     <div key={index} className="flex gap-1 mb-2">
                         <input type="text"
