@@ -9,6 +9,10 @@ interface ICategoryItem {
     _id: string;
     name: string;
     parentCategory: ICategoryItem | null
+    properties: [{
+        name: string;
+        values: string[];
+    }];
 };
 
 interface IProperty {
@@ -75,6 +79,11 @@ export default function Categories() {
         setEditedCategory(category);
         setName(category.name);
         setParentCategory(category.parentCategory ? category.parentCategory._id : null);
+        setProperties(
+            category.properties.map(({name,values}) => (
+                { name, values: values.join(',') }
+          ))
+        );
     };
 
     const handleOpenModal = (category: ICategoryItem) => {
@@ -148,7 +157,7 @@ export default function Categories() {
 
             <div className="mb-2">
                 <label className="block">Properties</label>
-                <button onClick={addProperty} type="button" className="btn-default bg-green-500 text-sm mb-2">Add new property</button>
+                <button type="button" onClick={addProperty} className="btn-grey">Add new property</button>
                 {properties.length > 0 && properties.map((property, index) => (
                     <div key={index} className="flex gap-1 mb-2">
                         <input type="text"
