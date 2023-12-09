@@ -9,6 +9,7 @@ interface IProduct {
   category: string;
   price: number;
   images: string[];
+  properties: { [key: string] : string }
 }
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -19,12 +20,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     if (method === 'GET'){
       res.json(await Product.find())
     } else if (method === 'POST'){
-      const { title, description, category, price, images } : IProduct = req.body;
-      const productDoc = await Product.create({title, description, category, price, images})
+      const { title, description, category, price, images, properties} : IProduct = req.body;
+      const productDoc = await Product.create({ title, description, category, price, images, properties })
       res.json(productDoc);
     } else if (method === 'PUT') {
-      const { title,description, category, price, images,_id } : IProduct = req.body;
-      await Product.updateOne({_id}, { title,description,category,price,images });
+      const { title,description, category, price, images,_id, properties } : IProduct = req.body;
+      await Product.updateOne({_id}, { title,description,category,price,images, properties });
       res.json(true);
     } else if (method === 'DELETE') {
       if (req.query?.id) {

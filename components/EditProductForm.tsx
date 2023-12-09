@@ -12,6 +12,7 @@ interface ProductItem {
     category: string;
     price: number;
     images: string[];
+    properties: { [key:string] : string }
 }
 interface EditProductFormProps {
     productId: string;
@@ -23,7 +24,8 @@ interface ItemType {
 interface CategoryItem {
   _id: string;
   name: string;
-  parentCategory: CategoryItem
+  parentCategory: CategoryItem;
+  properties: Array<{ [key: string]: string[] }>
 };
 
 export default function EditProductForm({productId}: EditProductFormProps) {
@@ -38,6 +40,8 @@ export default function EditProductForm({productId}: EditProductFormProps) {
     const [imgLoadingStatus, setImgLoadingStatus] = useState<boolean>(false);
     const [categories,setCategories] = useState<CategoryItem[]>([]);
     const [refreshPage, setRefreshPage] = useState<boolean>(false);
+
+    const [productProperties,setProductProperties] = useState<{ [key: string]: string }>(selectedProduct?.properties || {});
 
     useEffect(() => {
       const fetchProductsData =  async () => {
@@ -54,7 +58,8 @@ export default function EditProductForm({productId}: EditProductFormProps) {
             setImagesOrder(product?.images.map((item, index) => ({ 
               id: index, 
               name: item
-            })) || [])
+            })) || []);
+            setProductProperties(product?.properties || {})
         } catch (error) {
             console.log('Error fetching products:', error);
         }
@@ -72,7 +77,7 @@ export default function EditProductForm({productId}: EditProductFormProps) {
 
     const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const data = { _id: productId, title, description, category, price, images };
+      const data = { _id: productId, title, description, category, price, images, properties: productProperties };
       try {
         await axios.put('/api/products/', data);
         setRefreshPage(true);
@@ -96,6 +101,33 @@ export default function EditProductForm({productId}: EditProductFormProps) {
       }
     }
 
+    const setProductProp = (propName: string, value: string) => {
+      setProductProperties(prev => {
+        const newProductProps = {...prev};
+        newProductProps[propName] = value;
+        return newProductProps;
+      });
+    }
+    
+
+    const propertiesToFill : Array< {[key: string]: string[] }> = [];
+    if (categories.length > 0 && category) {
+      // show children's properties
+      let catInfo = categories.find(({_id}) => _id === category);
+      if (catInfo){
+        propertiesToFill.push(...catInfo.properties);
+
+        // show parent's properties
+        while(catInfo?.parentCategory?._id) {
+          const parentCat = categories.find(({_id}) => _id === catInfo?.parentCategory?._id);
+          if (parentCat){
+            propertiesToFill.push(...parentCat.properties);
+            catInfo = parentCat;
+          }    
+        }
+      }  
+    }
+
     if (refreshPage){
       return redirect ('/products')
     }
@@ -110,16 +142,39 @@ export default function EditProductForm({productId}: EditProductFormProps) {
           <label>Description</label>
           <textarea className="px-1 mb-2" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
         </div>
-        <div className="flex flex-col">
-          <label>Category</label>
-          <select value={category} onChange={e => setCategory(e.target.value)}>
-            <option value="">Uncategorized</option>
-            {categories.length > 0 && categories.map((c:CategoryItem) => (
-              <option key={c._id} value={c._id}>{c.name}</option>
-            ))}
-          </select>
+
+        <div className="flex flex-row gap-3">
+          <div className="flex flex-col">
+            <label>Category</label>
+          </div>
+          <div className="flex flex-col">
+            <select value={category} onChange={e => setCategory(e.target.value)}>
+              <option value="">Uncategorized</option>
+              {categories.length > 0 && categories.map((c:CategoryItem) => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        
+
+        {propertiesToFill.length > 0 && propertiesToFill.map((property, index) => (
+          <div key={index} className="flex gap-3">
+            <label>{property.name}</label>
+            <div>
+              <select value={productProperties[property.name.toString()]} 
+                onChange={(e) => {
+                  setProductProp(property.name.toString(), e.target.value)
+                  console.log("tttt", productProperties[property.name.toString()])
+                }}
+              >
+                {property.values.map(value => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        ))}
+
         <div className="flex flex-col">
           <label>Price (in USD)</label>
           <input className="px-1 mb-2" type="number" placeholder="Price" value={price.toString()} onChange={(e) => setPrice(Number(e.target.value))} />
