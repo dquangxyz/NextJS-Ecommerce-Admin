@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 interface CategoryItem {
   _id: string;
   name: string;
-  parentCategory: CategoryItem
+  parentCategory: CategoryItem;
+  properties: Array<{ [key: string]: string[] }>
 };
 
 export default function NewProductForm() {
@@ -18,11 +19,12 @@ export default function NewProductForm() {
     const [categories,setCategories] = useState<CategoryItem[]>([]);
 
     const [imgLoadingStatus, setImgLoadingStatus] = useState<boolean>(false);
+    const [productProperties,setProductProperties] = useState<{ [key: string]: string }>({});
 
     const [goToProduct, setGoToProduct] = useState<boolean>(false);
 
     useEffect(() => {
-      setImages(images);
+       setImages(images);
 
       const fetchCategoryData = async () => {
         const res = await axios.get('/api/categories');
@@ -33,7 +35,7 @@ export default function NewProductForm() {
 
     const handleAddNewProduct = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const data = { title, description, category, price, images };
+      const data = { title, description, category, price, images, properties: productProperties };
       await axios.post('/api/products', data)
       setGoToProduct(true);
     }
@@ -54,6 +56,32 @@ export default function NewProductForm() {
       }
     }
 
+    const setProductProp = (propName: string, value: string) => {
+      setProductProperties(prev => {
+        const newProductProps = {...prev};
+        newProductProps[propName] = value;
+        return newProductProps;
+      });
+    }
+
+    const propertiesToFill : Array< {[key: string]: string[] }> = [];
+    if (categories.length > 0 && category) {
+      // show children's properties
+      let catInfo = categories.find(({_id}) => _id === category);
+      if (catInfo){
+        propertiesToFill.push(...catInfo.properties);
+
+        // show parent's properties
+        while(catInfo?.parentCategory?._id) {
+          const parentCat = categories.find(({_id}) => _id === catInfo?.parentCategory?._id);
+          if (parentCat){
+            propertiesToFill.push(...parentCat.properties);
+            catInfo = parentCat;
+          }    
+        }
+      }  
+    }
+
     if (goToProduct){
       return redirect ('/products')
     }
@@ -68,15 +96,38 @@ export default function NewProductForm() {
           <label>Description</label>
           <textarea className="px-1 mb-2" placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)}></textarea>
         </div>
-        <div className="flex flex-col">
-          <label>Category</label>
-          <select value={category} onChange={e => setCategory(e.target.value)}>
-            <option value="">Uncategorized</option>
-            {categories.length > 0 && categories.map((c:CategoryItem) => (
-              <option key={c._id} value={c._id}>{c.name}</option>
-            ))}
-          </select>
+        <div className="flex flex-row gap-3">
+          <div className="flex flex-col">
+            <label>Category</label>
+          </div>
+          <div className="flex flex-col">
+            <select value={category} onChange={e => setCategory(e.target.value)}>
+              <option value="">Uncategorized</option>
+              {categories.length > 0 && categories.map((c:CategoryItem) => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
+
+        {propertiesToFill.length > 0 && propertiesToFill.map((property, index) => (
+          <div key={index} className="flex gap-3">
+            <label>{property.name}</label>
+            <div>
+              <select value={productProperties[property.name.toString()]} 
+                onChange={(e) => {
+                  setProductProp(property.name.toString(), e.target.value)
+                  console.log("tttt", productProperties[property.name.toString()])
+                }}
+              >
+                {property.values.map(value => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        ))}
+
         <div className="flex flex-col">
           <label>Price (in USD)</label>
           <input className="px-1 mb-2" type="number" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
