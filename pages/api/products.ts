@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import {Product} from '@/models/Product';
 import { mongooseConnect } from '@/lib/mongoose';
+import { authOptions, isAdminRequest } from './auth/[...nextauth]';
 
 interface IProduct {
   _id: string;
@@ -16,6 +17,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   try {
     const { method } = req;
     await mongooseConnect();
+    await isAdminRequest(req,res);
     
     if (method === 'GET'){
       res.json(await Product.find())

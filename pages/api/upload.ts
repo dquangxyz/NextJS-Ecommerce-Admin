@@ -3,8 +3,13 @@ import multiparty from 'multiparty';
 import fs from 'fs';
 import mime from 'mime-types';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { mongooseConnect } from '@/lib/mongoose';
+import { isAdminRequest } from './auth/[...nextauth]';
 
-export default function handle(req: NextApiRequest, res: NextApiResponse) {
+export default async function handle(req: NextApiRequest, res: NextApiResponse) {
+    await mongooseConnect();
+    await isAdminRequest(req,res);
+
     const form = new multiparty.Form();
     const client = new S3Client({
         region: 'ap-southeast-2',

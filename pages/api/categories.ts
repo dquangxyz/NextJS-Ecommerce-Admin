@@ -2,6 +2,7 @@ import { Category } from '@/models/Category';
 import { NextApiRequest, NextApiResponse } from 'next';
 import mongoose from "mongoose";
 import { mongooseConnect } from '@/lib/mongoose';
+import { authOptions, isAdminRequest } from './auth/[...nextauth]';
 
 interface ICategory {
     name: string,
@@ -15,6 +16,7 @@ interface ICategory {
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
     const { method } = req;
     await mongooseConnect();
+    await isAdminRequest(req,res);
     
     if (method === 'GET'){
         res.json(await Category.find().populate('parentCategory'));
